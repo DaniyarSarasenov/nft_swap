@@ -1,4 +1,7 @@
-#
+This is ERC21 + ERC20 Swap contract
+
+### Compile Swap Contract
+npx hardhat compile
 
 ## Scripts
 

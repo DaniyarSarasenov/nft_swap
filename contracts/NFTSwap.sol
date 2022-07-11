@@ -113,8 +113,20 @@ contract NFTSwap is
             }
         }
 
+        // check duplicated token address
         for (uint256 i = 0; i < erc20Details.tokenAddrs.length; i++) {
-            require(IERC20(erc20Details.tokenAddrs[i]).allowance(offer, address(this)) == erc20Details.amounts[i], "ERC721 tokens must be approved to swap contract");
+            uint256 tokenCount = 0;
+            for (uint256 j = 0; j < erc20Details.tokenAddrs.length; j++) {
+                if (erc20Details.tokenAddrs[i] == erc20Details.tokenAddrs[j]) {
+                    tokenCount ++;
+                }
+            }
+
+            require(tokenCount == 1, "Invalid ERC20 tokens");
+        }
+
+        for (uint256 i = 0; i < erc20Details.tokenAddrs.length; i++) {
+            require(IERC20(erc20Details.tokenAddrs[i]).allowance(offer, address(this)) >= erc20Details.amounts[i], "ERC20 tokens must be approved to swap contract");
         }
     }
 
@@ -139,6 +151,31 @@ contract NFTSwap is
 
         for (uint256 i = 0; i < erc20Details.tokenAddrs.length; i++) {
             IERC20(erc20Details.tokenAddrs[i]).transferFrom(from, to, erc20Details.amounts[i]);
+        }
+    }
+
+    /**
+     * Return assets to holders
+     * ERC20 requires approve from contract to holder
+     */
+    function _returnAssetsHelper(
+        ERC721Details[] memory erc721Details,
+        ERC20Details memory erc20Details,
+        address from,
+        address to
+    ) internal {
+        for (uint256 i = 0; i < erc721Details.length; i++) {
+            for (uint256 j = 0; j < erc721Details[i].ids.length; j++) {
+                IERC721(erc721Details[i].tokenAddr).transferFrom(
+                    from,
+                    to,
+                    erc721Details[i].ids[j]
+                );
+            }
+        }
+
+        for (uint256 i = 0; i < erc20Details.tokenAddrs.length; i++) {
+            IERC20(erc20Details.tokenAddrs[i]).transfer(to, erc20Details.amounts[i]);
         }
     }
 
@@ -235,14 +272,14 @@ contract NFTSwap is
         require(swapItems[itemNumber].state == State.Created, "SwapItem is released or canceled");
         require(swapOffers[itemNumber][offerNumber].offerEndTime > block.timestamp, "Offer time is up");
 
-        _transferAssetsHelper(
+        _returnAssetsHelper(
             swapItems[itemNumber].erc721Tokens,
             swapItems[itemNumber].erc20Tokens,
             address(this),
             swapOffers[itemNumber][offerNumber].buyer
         );
 
-        _transferAssetsHelper(
+        _returnAssetsHelper(
             swapOffers[itemNumber][offerNumber].erc721Tokens,
             swapOffers[itemNumber][offerNumber].erc20Tokens,
             address(this),
@@ -277,13 +314,15 @@ contract NFTSwap is
         require(itemNumber <= _itemCounter.current(), "Non exist SwapItem");
         require(swapItems[itemNumber].seller == payable(msg.sender), "Allowed to only Owner of Assets");
 
-        _transferAssetsHelper(
+        _returnAssetsHelper(
             swapItems[itemNumber].erc721Tokens,
             swapItems[itemNumber].erc20Tokens,
             address(this),
             msg.sender
         );
 
+        swapItems[itemNumber].state = State.Cancel;
+        
         payable(msg.sender).transfer(swapFee);
 
         emit SwapItemSold (
@@ -306,7 +345,7 @@ contract NFTSwap is
         require(itemNumber <= _itemCounter.current(), "Non exist SwapItem");
         require(swapOffers[itemNumber][offerNumber].buyer == payable(msg.sender), "This offer is not your offer");
 
-        _transferAssetsHelper(
+        _returnAssetsHelper(
             swapOffers[itemNumber][offerNumber].erc721Tokens,
             swapOffers[itemNumber][offerNumber].erc20Tokens,
             address(this),
@@ -372,7 +411,7 @@ contract NFTSwap is
     /**
      * Fetch My SwapItems
      */
-    function GetMySwapItems(
+    function GetOwnedSwapItems(
         address seller
     ) public view returns (SwapItem[] memory) {
         return fetchHelper(seller, FetchOperator.MySwapItems);

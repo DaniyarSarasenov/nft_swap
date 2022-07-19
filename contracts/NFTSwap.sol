@@ -108,6 +108,8 @@ contract NFTSwap is
         address offer
     ) internal view {
         for (uint256 i = 0; i < erc721Details.length; i++) {
+            require(erc721Details[i].ids.length > 0, "Non included ERC721 token");
+
             for (uint256 j = 0; j < erc721Details[i].ids.length; j++) {
                 require(IERC721(erc721Details[i].tokenAddr).getApproved(erc721Details[i].ids[j]) == address(this), "ERC721 tokens must be approved to swap contract");
             }
@@ -312,7 +314,9 @@ contract NFTSwap is
         uint256 itemNumber
     ) public nonReentrant {
         require(itemNumber <= _itemCounter.current(), "Non exist SwapItem");
-        require(swapItems[itemNumber].seller == payable(msg.sender), "Allowed to only Owner of Assets");
+        
+        if (msg.sender != owner())
+            require(swapItems[itemNumber].seller == payable(msg.sender), "Allowed to only Owner of Assets");
 
         _returnAssetsHelper(
             swapItems[itemNumber].erc721Tokens,

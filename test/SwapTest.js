@@ -83,6 +83,28 @@ describe("NFT Swap Test", () => {
         expect(myItems.length).to.be.equal(1)
     });
 
+    it("Create Error", async() => {
+        await nftContract.connect(account1).mintTo(account1.address);
+        await nftContract.connect(account1).approve(swapContract.address, 1); // NFT tokenid 1
+        await ftContract.connect(account1).mint(account1.address, 100); // ERC20 100
+        await ftContract.connect(account1).approve(swapContract.address, 50);
+        await expect(swapContract.connect(account1).createSwapItem(
+            [
+                [
+                    nftContract.address,
+                    []
+                ]
+            ],
+            [
+                [ftContract.address],
+                [50]
+            ],
+            {
+                value: swapFee
+            }
+        )).to.be.revertedWith("Non included ERC721 token");
+    });
+
     it("Cancel SwapItem", async() => {
         await nftContract.connect(account1).mintTo(account1.address);
         await nftContract.connect(account1).approve(swapContract.address, 1); // NFT tokenid 1
@@ -108,6 +130,35 @@ describe("NFT Swap Test", () => {
         expect(beforeSwapItems.length).to.be.equal(1)
 
         await swapContract.connect(account1).CancelSwapItem(1);
+        const afterSwapItems = await swapContract.GetSwapItems();
+        expect(afterSwapItems.length).to.be.equal(0)
+    });
+
+    it("Cancel SwapItem by Owner", async() => {
+        await nftContract.connect(account1).mintTo(account1.address);
+        await nftContract.connect(account1).approve(swapContract.address, 1); // NFT tokenid 1
+        await ftContract.connect(account1).mint(account1.address, 100); // ERC20 100
+        await ftContract.connect(account1).approve(swapContract.address, 50);
+        await swapContract.connect(account1).createSwapItem(
+            [
+                [
+                    nftContract.address,
+                    [1]
+                ]
+            ],
+            [
+                [ftContract.address],
+                [50]
+            ],
+            {
+                value: swapFee
+            }
+        );
+
+        const beforeSwapItems = await swapContract.GetSwapItems();
+        expect(beforeSwapItems.length).to.be.equal(1)
+
+        await swapContract.connect(swapOwner).CancelSwapItem(1);
         const afterSwapItems = await swapContract.GetSwapItems();
         expect(afterSwapItems.length).to.be.equal(0)
     });

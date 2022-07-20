@@ -431,6 +431,36 @@ contract NFTSwap is
     }
 
     /**
+     * Get SwapOffers by Index
+     */
+    function GetSwapOffersByIndex(
+        uint256 itemNumber
+    ) public view returns (SwapOffer[] memory) {
+        uint total = _itemCounter.current();
+        uint itemCount = 0;
+        for (uint i = 1; i <= total; i++) {
+            for (uint j = 0; j < swapItems[i].offerCount; j++) {
+                if (swapOffers[i][j].swapItemId == itemNumber) {
+                    itemCount ++;
+                }
+            }
+        }
+
+        uint index = 0;
+        SwapOffer[] memory items = new SwapOffer[](itemCount);
+        for (uint i = 1; i <= total; i++) {
+            for (uint j = 0; j < swapItems[i].offerCount; j++) {
+                if (swapOffers[i][j].swapItemId == itemNumber) {
+                    items[index] = swapOffers[i][j];
+                    index ++;
+                }
+            }
+        }
+
+        return items;
+    }
+
+    /**
      * Fetch My SwapOffers
      */
     function GetSwapOffers(

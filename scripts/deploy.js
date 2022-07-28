@@ -2,17 +2,17 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying contracts with the account: ", deployer.address);
   
-    const NFTSwap = await ethers.getContractFactory(
-      "NFTSwap"
+    const NFTSwapBox = await ethers.getContractFactory(
+      "NFTSwapBox"
     );
 
-    const swapper = await NFTSwap.deploy(
+    const swapper = await NFTSwapBox.deploy(
       
     );
     await swapper.deployed();
   
     console.log(
-      "NFTSwap is deployed to address: ",
+      "NFTSwapBox contract is deployed to address: ",
       swapper.address
     );
   }

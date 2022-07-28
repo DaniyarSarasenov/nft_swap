@@ -15,7 +15,7 @@ contract NFTSwapBox is
     using Counters for Counters.Counter;
     Counters.Counter private _itemCounter;
 
-    uint256[] public swapFees = [0.01 ether, 0.02 ether, 0.03 ether, 0.04 ether];
+    uint256[] public swapFees = [0.01 ether, 0.02 ether, 0.01 ether, 0.01 ether];
 
     bool openSwap = false;
 
@@ -103,9 +103,9 @@ contract NFTSwapBox is
     }
 
     /**
-     * Manage the Swap
+     * Set the Swap state
      */
-    function setOpenOffer(bool _new) external onlyOwner {
+    function setSwapState(bool _new) external onlyOwner {
         openSwap = _new;
     }
 
@@ -117,10 +117,17 @@ contract NFTSwapBox is
     }
 
     /**
-     *
+     * Set SwapContract Fees
      */
     function setSwapPrices(uint256[] memory fees) external onlyOwner {
         swapFees = fees;
+    }
+
+    /**
+     * Get SwapContract Fees
+     */
+    function getSwapPrices() public view returns (uint256[] memory) {
+        return swapFees;
     }
 
     /**
@@ -185,7 +192,7 @@ contract NFTSwapBox is
         }
 
         for (uint256 i = 0; i < erc20Details.tokenAddrs.length; i++) {
-            // require(whitelisttokens[erc20Details.tokenAddrs[i]], "Not allowed ERC20 tokens");
+            require(whitelisttokens[erc20Details.tokenAddrs[i]], "Not allowed ERC20 tokens");
             require(IERC20(erc20Details.tokenAddrs[i]).allowance(offer, address(this)) >= erc20Details.amounts[i], "ERC20 tokens must be approved to swap contract");
             require(IERC20(erc20Details.tokenAddrs[i]).balanceOf(offer) >= erc20Details.amounts[i], "Insufficient ERC20 tokens");
         }
@@ -298,7 +305,7 @@ contract NFTSwapBox is
     ) public payable isOpenForSwap nonReentrant {
         require(erc721Details.length > 0, "SwapItems must include ERC721");
 
-        require(msg.value >= swapFees[0], "Insufficient Listing Fee");
+        require(msg.value >= swapFees[0], "Insufficient Creating Box Fee");
 
         _checkAssets(erc721Details, erc20Details, msg.sender);
         _transferAssetsHelper(erc721Details, erc20Details, msg.sender, address(this));
@@ -564,7 +571,7 @@ contract NFTSwapBox is
         uint itemCount = 0;
 
         if (swapBoxes[listBoxID].state == State.Waiting_for_offers) {
-            for (uint256 i = 0; i <= swapBoxes[listBoxID].offers.length; i++) {
+            for (uint256 i = 0; i < swapBoxes[listBoxID].offers.length; i++) {
                 if (swapBoxes[listBoxID].offers[i].active && _existBoxID(swapBoxes[swapBoxes[listBoxID].offers[i].boxID], listBoxID, true)) {
                     itemCount++;
                 }
@@ -574,7 +581,7 @@ contract NFTSwapBox is
         SwapBox[] memory boxes = new SwapBox[](itemCount);
         uint256 itemIndex = 0;
 
-        for (uint256 i = 0; i <= swapBoxes[listBoxID].offers.length; i++) {
+        for (uint256 i = 0; i < swapBoxes[listBoxID].offers.length; i++) {
             if (swapBoxes[listBoxID].offers[i].active && _existBoxID(swapBoxes[swapBoxes[listBoxID].offers[i].boxID], listBoxID, true)) {
                 boxes[itemIndex] = swapBoxes[swapBoxes[listBoxID].offers[i].boxID];
                 itemIndex++;
@@ -587,13 +594,13 @@ contract NFTSwapBox is
     /**
      * Get waiting Boxes what offered Box link to
      */
-    function getWaitingWapBoxes(
+    function getWaitingSwapBoxes(
         uint256 offerBoxID
     ) public view returns (SwapBox[] memory) {
         uint itemCount = 0;
 
         if (swapBoxes[offerBoxID].state == State.Offered) {
-            for (uint256 i = 0; i <= swapBoxes[offerBoxID].offers.length; i++) {
+            for (uint256 i = 0; i < swapBoxes[offerBoxID].offers.length; i++) {
                 if (swapBoxes[offerBoxID].offers[i].active && _existBoxID(swapBoxes[swapBoxes[offerBoxID].offers[i].boxID], offerBoxID, true)) {
                     itemCount++;
                 }
@@ -603,7 +610,7 @@ contract NFTSwapBox is
         SwapBox[] memory boxes = new SwapBox[](itemCount);
         uint256 itemIndex = 0;
 
-        for (uint256 i = 0; i <= swapBoxes[offerBoxID].offers.length; i++) {
+        for (uint256 i = 0; i < swapBoxes[offerBoxID].offers.length; i++) {
             if (swapBoxes[offerBoxID].offers[i].active && _existBoxID(swapBoxes[swapBoxes[offerBoxID].offers[i].boxID], offerBoxID, true)) {
                 boxes[itemIndex] = swapBoxes[swapBoxes[offerBoxID].offers[i].boxID];
                 itemIndex++;

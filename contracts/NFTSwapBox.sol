@@ -56,7 +56,9 @@ contract NFTSwapBox is
         address owner,
         State state,
         uint256 createdTime,
-        uint256 updateTime
+        uint256 updateTime,
+        ERC721Details[] erc721Tokens,
+        ERC20Details erc20Tokens
     );
 
     event SwapBoxCreated (
@@ -328,7 +330,9 @@ contract NFTSwapBox is
             msg.sender,
             State.Initiated,
             block.timestamp,
-            block.timestamp
+            block.timestamp,
+            erc721Details,
+            erc20Details
         );
     }
 
@@ -350,7 +354,9 @@ contract NFTSwapBox is
             msg.sender,
             State.Waiting_for_offers,
             swapBoxes[boxID].createdTime,
-            block.timestamp
+            block.timestamp,
+            swapBoxes[boxID].erc721Tokens,
+            swapBoxes[boxID].erc20Tokens
         );
     }
 
@@ -372,7 +378,9 @@ contract NFTSwapBox is
             msg.sender,
             State.Offered,
             swapBoxes[boxID].createdTime,
-            block.timestamp
+            block.timestamp,
+            swapBoxes[boxID].erc721Tokens,
+            swapBoxes[boxID].erc20Tokens
         );
     }
 
@@ -402,7 +410,9 @@ contract NFTSwapBox is
             msg.sender,
             State.Offered,
             swapBoxes[boxID].createdTime,
-            block.timestamp
+            block.timestamp,
+            swapBoxes[boxID].erc721Tokens,
+            swapBoxes[boxID].erc20Tokens
         );
     }
 
@@ -424,7 +434,9 @@ contract NFTSwapBox is
             msg.sender,
             State.Initiated,
             swapBoxes[boxID].createdTime,
-            block.timestamp
+            block.timestamp,
+            swapBoxes[boxID].erc721Tokens,
+            swapBoxes[boxID].erc20Tokens
         );
     }
 
